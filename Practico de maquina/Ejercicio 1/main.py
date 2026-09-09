@@ -5,6 +5,11 @@ import math
 import os
 import argparse
 
+# para poder importar el utils .....
+os.sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from utils import *
+
 ## VALIDACION DE ARCHIVOS
 def validar_archivo(path):
   if not os.path.isfile(path):
@@ -49,27 +54,6 @@ def leer_header_wav(path):
   print("  Frecuencia de muestreo:", frec_muestreo, "Hz")
   print("  Bits por muestra:", bits_muestra)
   print("  Tamaño de datos:", tam_data, "bytes")
-
-
-## CÁLCULOS ESTADÍSTICOS Y ENTROPÍA
-def calcular_distribucion_bytes(path):
-  frecuencias = np.zeros(256, dtype=int)
-  
-  with open(path, "rb") as f:
-      contenido = f.read()
-      for byte in contenido:
-          frecuencias[byte] += 1
-
-  total_bytes = len(contenido)
-  distribucion = frecuencias / total_bytes
-  return distribucion
-
-def calcular_entropia(distribucion):
-  entropia = 0.0
-  for p in distribucion:
-      if p > 0:
-          entropia -= p * math.log2(p)
-  return entropia
 
 ## GRÁFICOS
 def graficar_histogramas(dist_wav, dist_mp3):
@@ -140,8 +124,8 @@ def main():
 
     
     # e) Cálculo de Entropía
-    entropia_wav = calcular_entropia(dist_wav)
-    entropia_mp3 = calcular_entropia(dist_mp3)
+    entropia_wav = calcular_entropia_shannon(dist_wav)
+    entropia_mp3 = calcular_entropia_shannon(dist_mp3)
 
     print(f"Entropia archivo WAV: {entropia_wav:.4f} bits/símbolo")
     print(f"Entropia archivo MP3: {entropia_mp3:.4f} bits/símbolo")
