@@ -13,21 +13,25 @@ def validar_archivo(path):
   _, ext = os.path.splitext(path)
 
   if ext == ".mp3":
-    validar_formato_mp3(path)
+    if not validar_formato_mp3(path):
+      raise Exception("El archivo especificado no tiene una cabecera MP3 válida.")
   elif ext  == ".wav":
-    validar_formato_wav(path)
+    if not validar_formato_wav(path):
+      raise Exception("El archivo especificado no tiene una cabecera WAV válida.")
   else:
     raise Exception(f"Extension no soportada: {ext}")
 
 def validar_formato_wav(ruta):
   with open(ruta, "rb") as f:
       cabecera = f.read(12)
+  print(f"Cabecera de archivo WAV: {cabecera}")
   return cabecera[0:4] == b"RIFF" and cabecera[8:12] == b"WAVE"
 
 def validar_formato_mp3(ruta):
   with open(ruta, "rb") as f:
-      inicio = f.read(3)
-  return inicio == b"ID3" or inicio[:2] in (b"\xff\xfb", b"\xff\xf3", b"\xff\xf2")
+      cabecera = f.read(3)
+  print(f"Cabecera de archivo MP3: {cabecera}")
+  return cabecera == b"ID3" or cabecera[:2] in (b"\xff\xfb", b"\xff\xf3", b"\xff\xf2")
 
 ## LECTURA DE HEADER
 def leer_header_wav(path):
@@ -38,22 +42,57 @@ def leer_header_wav(path):
   frec_muestreo, byte_rate, block_align, bits_muestra, \
   data_id, tam_data = struct.unpack("<4sI4s4sIHHIIHH4sI", cabecera)
 
-  print("ChunkID:", riff.decode())
-  print("Tamaño archivo:", chunk_size)
-  print("Formato:", formato.decode())
-  print("Canales:", canales)
-  print("Frecuencia de muestreo:", frec_muestreo, "Hz")
-  print("Bits por muestra:", bits_muestra)
-  print("Tamaño de datos:", tam_data, "bytes")
+  print("  ChunkID:", riff.decode())
+  print("  Tamaño archivo:", chunk_size)
+  print("  Formato:", formato.decode())
+  print("  Canales:", canales)
+  print("  Frecuencia de muestreo:", frec_muestreo, "Hz")
+  print("  Bits por muestra:", bits_muestra)
+  print("  Tamaño de datos:", tam_data, "bytes")
 
+
+## CÁLCULOS ESTADÍSTICOS Y ENTROPÍA
 def calcular_distribucion_bytes(path):
-  ...
+  frecuencias = np.zeros(256, dtype=int)
+  
+  with open(path, "rb") as f:
+      contenido = f.read()
+      for byte in contenido:
+          frecuencias[byte] += 1
+
+  total_bytes = len(contenido)
+  distribucion = frecuencias / total_bytes
+  return distribucion
 
 def calcular_entropia(distribucion):
-  ...
+  entropia = 0.0
+  for p in distribucion:
+      if p > 0:
+          entropia -= p * math.log2(p)
+  return entropia
 
-def graficar_histograma(distribucion, titulo):
-  ...
+## GRÁFICOS
+def graficar_histogramas(dist_wav, dist_mp3):
+  bytes_eje = np.arange(256)
+
+  plt.figure(figsize=(12, 5))
+
+  plt.subplot(1, 2, 1)
+  plt.bar(bytes_eje, dist_wav, color='skyblue', width=1.0)
+  plt.title("Distribución de Probabilidad - BMP")
+  plt.xlabel("Valor de Byte (0-255)")
+  plt.ylabel("Probabilidad")
+  plt.grid(True, linestyle='--', alpha=0.6)
+
+  plt.subplot(1, 2, 2)
+  plt.bar(bytes_eje, dist_mp3, color='salmon', width=1.0)
+  plt.title("Distribución de Probabilidad - JPG")
+  plt.xlabel("Valor de Byte (0-255)")
+  plt.ylabel("Probabilidad")
+  plt.grid(True, linestyle='--', alpha=0.6)
+
+  plt.tight_layout()
+  plt.show()
 
 def parsear_argumentos():
   parser = argparse.ArgumentParser(
@@ -74,16 +113,43 @@ def parsear_argumentos():
   return parser.parse_args()
 
 def main():
+  # a) Carga y Validación
   args = parsear_argumentos()
   path_wav = args.wav
   path_mp3 = args.mp3
+  try: 
+    print("\n### Validacion de archivos ###")
+    validar_archivo(path_mp3)
+    print(" Archivo MP3 validado correctamente.")
+    validar_archivo(path_wav)
+    print("Archivo WAV validado correctamente.")
 
-  validar_archivo(path_mp3)
-  validar_archivo(path_wav)
+    # b) Análisis de Cabecera (Manipulación de bytes)
+    print("\n### Analisis de cabecera de archivo WAV ###")
+    leer_header_wav(path_wav)
 
-  leer_header_wav(path_wav)
-  
-  ...
+    # c) Distribución de Probabilidades
+    print("\n### Distribución de Probabilidades ###")
+    # print(" ## Archivo WAV ##")
+    dist_wav = calcular_distribucion_bytes(path_wav)
+    # print(dist_wav)
+
+    # print(" ## Archivo MP3 ##")
+    dist_mp3 = calcular_distribucion_bytes(path_mp3)
+    # print(dist_mp3)
+
+    
+    # e) Cálculo de Entropía
+    entropia_wav = calcular_entropia(dist_wav)
+    entropia_mp3 = calcular_entropia(dist_mp3)
+
+    print(f"Entropia archivo WAV: {entropia_wav:.4f} bits/símbolo")
+    print(f"Entropia archivo MP3: {entropia_mp3:.4f} bits/símbolo")
+
+    # d) Histogramas
+    graficar_histogramas(dist_wav, dist_mp3)
+  except Exception as e: 
+    print(e)
 
 if __name__ == "__main__":
   main()
