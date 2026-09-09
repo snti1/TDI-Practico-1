@@ -5,6 +5,11 @@ import math
 import os
 import argparse
 
+# para poder importar el utils .....
+os.sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from utils import *
+
 ## VALIDACION DE ARCHIVOS
 def validar_archivo(path):
     if not os.path.isfile(path):
@@ -50,26 +55,6 @@ def leer_header_bmp(path):
     print("Bits por píxel:", bits_pixel)
     print("Tamaño de imagen (datos):", tam_imagen, "bytes")
     print("--------------------")
-
-## CÁLCULOS ESTADÍSTICOS Y ENTROPÍA
-def calcular_distribucion_bytes(path):
-    frecuencias = np.zeros(256, dtype=int)
-    
-    with open(path, "rb") as f:
-        contenido = f.read()
-        for byte in contenido:
-            frecuencias[byte] += 1
-
-    total_bytes = len(contenido)
-    distribucion = frecuencias / total_bytes
-    return distribucion
-
-def calcular_entropia(distribucion):
-    entropia = 0.0
-    for p in distribucion:
-        if p > 0:
-            entropia -= p * math.log2(p)
-    return entropia
 
 ## GRÁFICOS
 def graficar_histogramas(dist_bmp, dist_jpg):
@@ -132,8 +117,8 @@ def main():
         dist_jpg = calcular_distribucion_bytes(path_jpg)
 
         # E. Cálculo de entropía de Shannon
-        entropia_bmp = calcular_entropia(dist_bmp)
-        entropia_jpg = calcular_entropia(dist_jpg)
+        entropia_bmp = calcular_entropia_shannon(dist_bmp)
+        entropia_jpg = calcular_entropia_shannon(dist_jpg)
 
         print(f"Entropía BMP: {entropia_bmp:.4f} bits/símbolo")
         print(f"Entropía JPG: {entropia_jpg:.4f} bits/símbolo")
