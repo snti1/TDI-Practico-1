@@ -118,26 +118,30 @@ def main():
     path_bmp = args.bmp
     path_jpg = args.jpg
 
-    # A. Validación de extensiones y firmas mágicas
-    validar_archivo(path_bmp)
-    validar_archivo(path_jpg)
+    try:
+        # A. Validación de extensiones y firmas mágicas
+        validar_archivo(path_bmp)
 
-    # B. Lectura e impresión del Header BMP
-    leer_header_bmp(path_bmp)
+        validar_archivo(path_jpg)
 
-    # C. Cálculo de distribuciones de frecuencia
-    dist_bmp = calcular_distribucion_bytes(path_bmp)
-    dist_jpg = calcular_distribucion_bytes(path_jpg)
+        # B. Lectura e impresión del Header BMP
+        leer_header_bmp(path_bmp)
 
-    # E. Cálculo de entropía de Shannon
-    entropia_bmp = calcular_entropia(dist_bmp)
-    entropia_jpg = calcular_entropia(dist_jpg)
+        # C. Cálculo de distribuciones de frecuencia
+        dist_bmp = calcular_distribucion_bytes(path_bmp)
+        dist_jpg = calcular_distribucion_bytes(path_jpg)
 
-    print(f"Entropía BMP: {entropia_bmp:.4f} bits/símbolo")
-    print(f"Entropía JPG: {entropia_jpg:.4f} bits/símbolo")
+        # E. Cálculo de entropía de Shannon
+        entropia_bmp = calcular_entropia(dist_bmp)
+        entropia_jpg = calcular_entropia(dist_jpg)
 
-    # D. Gráficos comparativos
-    graficar_histogramas(dist_bmp, dist_jpg)
+        print(f"Entropía BMP: {entropia_bmp:.4f} bits/símbolo")
+        print(f"Entropía JPG: {entropia_jpg:.4f} bits/símbolo")
+
+        # D. Gráficos comparativos
+        graficar_histogramas(dist_bmp, dist_jpg)
+    except Exception as e: 
+        print(e)
 
 if __name__ == "__main__":
     main()
