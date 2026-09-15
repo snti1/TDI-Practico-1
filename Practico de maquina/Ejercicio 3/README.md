@@ -41,19 +41,19 @@ Los archivos se pasan como argumentos posicionales. El parámetro opcional `--to
 ### Analizar un archivo
 
 ```bash
-python entropia_archivo.py ejemplo_texto.txt
+python main.py ejemplo_texto.txt
 ```
 
 ### Comparar varios archivos
 
 ```bash
-python entropia_archivo.py ejemplo_texto.txt texto.zip
+python main.py ejemplo_texto.txt texto.zip
 ```
 
 También pueden analizarse formatos diferentes:
 
 ```bash
-python entropia_archivo.py audio.wav audio.mp3 imagen.bmp imagen.jpg
+python main.py audio.wav audio.mp3 imagen.bmp imagen.jpg
 ```
 
 ### Cambiar la cantidad de bytes mostrados
@@ -61,19 +61,19 @@ python entropia_archivo.py audio.wav audio.mp3 imagen.bmp imagen.jpg
 Por defecto se muestran los 20 bytes más frecuentes:
 
 ```bash
-python entropia_archivo.py ejemplo_texto.txt texto.zip --top 30
+python main.py ejemplo_texto.txt texto.zip --top 30
 ```
 
 También puede utilizarse la forma abreviada:
 
 ```bash
-python entropia_archivo.py ejemplo_texto.txt -t 10
+python main.py ejemplo_texto.txt -t 10
 ```
 
 ### Mostrar la ayuda
 
 ```bash
-python entropia_archivo.py --help
+python main.py --help
 ```
     usage: main.py [-h] [-t TOP] archivos [archivos ...]
 
