@@ -1,11 +1,5 @@
 # Cálculo de Capacidad de Canal por Búsqueda Exhaustiva (Binario a Cuaternario)
 
-**Materia:** Teoría de la Información  
-**Carrera:** Licenciatura en Ciencias de la Computación  
-**Año:** 2026  
-
----
-
 ## 1. Descripción del Problema y Enunciado
 
 El objetivo del ejercicio es desarrollar una aplicación en Python que determine la **Capacidad de Canal (C)** de un **sistema discreto sin memoria** con entrada binaria (q = 2 símbolos de entrada: X {0, 1}) y salida cuaternaria (s = 4 símbolos de salida: Y {0, 1, 2, 3}). 

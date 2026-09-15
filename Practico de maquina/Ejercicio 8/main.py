@@ -46,7 +46,7 @@ def calcular_capacidad_canal(matriz):
 
 def ingresar_matriz():
     print("=== INGRESO DE LA MATRIZ DE TRANSICIÓN P(Y|X) (2x4) ===")
-    print("Ingrese las probabilidades condicionales P(Y=y_j | X=x_i) fila por fila.")
+    print("Ingrese las probabilidades condicionales P(Y=y_j | X=x_i).")
     matriz = []
     #for i in range(2):
     i = 0
