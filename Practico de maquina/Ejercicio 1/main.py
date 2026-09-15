@@ -63,19 +63,20 @@ def graficar_histogramas(dist_wav, dist_mp3):
 
   plt.subplot(1, 2, 1)
   plt.bar(bytes_eje, dist_wav, color='skyblue', width=1.0)
-  plt.title("Distribución de Probabilidad - BMP")
+  plt.title("Distribución de Probabilidad - WAV")
   plt.xlabel("Valor de Byte (0-255)")
   plt.ylabel("Probabilidad")
   plt.grid(True, linestyle='--', alpha=0.6)
 
   plt.subplot(1, 2, 2)
   plt.bar(bytes_eje, dist_mp3, color='salmon', width=1.0)
-  plt.title("Distribución de Probabilidad - JPG")
+  plt.title("Distribución de Probabilidad - MP3")
   plt.xlabel("Valor de Byte (0-255)")
   plt.ylabel("Probabilidad")
   plt.grid(True, linestyle='--', alpha=0.6)
 
   plt.tight_layout()
+  plt.savefig("histograma.png")
   plt.show()
 
 def parsear_argumentos():
