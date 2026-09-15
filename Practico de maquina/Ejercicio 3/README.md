@@ -1,160 +1,173 @@
-# Entropía Empírica en Archivos (Texto vs. Comprimidos)
+# Entropía empírica en archivos (texto vs. comprimidos)
 
-Teoría de la Información — Práctico de Máquina 1, Ejercicio 3
+**Teoría de la Información — Práctico de Máquina 1, Ejercicio 3**
 
 ## Descripción
 
-Este programa lee un archivo arbitrario **byte por byte**, en un tiempo
-**O(N)** (siendo N el tamaño del archivo), y calcula:
+Este programa analiza uno o más archivos como secuencias de bytes y calcula para cada uno:
 
-- La **frecuencia relativa** de aparición de cada byte (valores 0 a 255) → p_i
-- La **entropía empírica** de Shannon:
+- La frecuencia relativa de aparición de cada byte posible (`0` a `255`), representada por `p_i`.
+- La entropía empírica de Shannon: $H = -Σ p_i · log2(p_i)$
 
-  ```
-  H = -Σ p_i · log2(p_i)
-  ```
+- El rendimiento: $η = H / H_max$
 
-- El **rendimiento** (η = H / H_max) y la **redundancia** (R = 1 - η)
-  respecto del máximo teórico de 8 bits/símbolo (256 valores de byte
-  equiprobables → H_max = log2(256) = 8).
+- La redundancia: $R = 1 - η$
 
-Permite analizar uno o varios archivos en la misma corrida e imprime, para
-cada uno, la tabla de frecuencias relativas de sus bytes más comunes. Si se
-le pasan dos o más archivos, además muestra al final una tabla comparativa.
+Para un byte existen 256 símbolos posibles, por lo que la entropía máxima teórica es:
 
-## Requisitos
+$H_max = log2(256) = 8 bits/símbolo$
 
-- Python 3.8 o superior.
-- No usa librerías externas (`sys`, `math` y `collections` son parte de la
-  librería estándar de Python) — no hace falta instalar nada.
+El programa permite analizar varios archivos en una misma ejecución. Para cada archivo muestra un resumen y una tabla con los bytes más frecuentes. Cuando se procesan dos o más archivos, también imprime una comparación final.
 
-## Instalación
+El programa principal importa:
+```python
+from utils import (
+    calcular_distribucion_bytes,
+    calcular_entropia_shannon,
+)
+```
 
-1. Descargar `entropia_archivo.py` y guardarlo en una carpeta.
-2. Verificar que Python está instalado:
+Y las utiliza de la siguiente manera:
 
-   ```bash
-   python --version
-   # o, en algunos sistemas:
-   python3 --version
-   ```
+```python
+distribucion = calcular_distribucion_bytes(path)
+entropia = calcular_entropia_shannon(distribucion)
+```
 
 ## Ejecución
 
-El programa se ejecuta desde una terminal, pasándole la ruta de uno o más
-archivos directamente como argumentos (sin flags).
+Los archivos se pasan como argumentos posicionales. El parámetro opcional `--top` permite indicar cuántos bytes frecuentes se mostrarán.
 
-### Analizar un solo archivo
-
-```bash
-python entropia_archivo.py texto.txt
-```
-
-### Comparar dos (o más) archivos
-
-Pensado especialmente para comparar un archivo de texto puro contra su
-versión comprimida (`.zip`, `.rar`, etc.) de tamaño similar:
+### Analizar un archivo
 
 ```bash
-python entropia_archivo.py texto.txt texto.zip
+python main.py ejemplo_texto.txt
 ```
 
-Se pueden pasar más de dos archivos; la tabla comparativa final se arma con
-todos los que hayan podido leerse.
-
-### Sin argumentos
-
-Si se ejecuta sin pasarle ningún archivo, el programa solo imprime el modo
-de uso y termina (no es un error de sintaxis, es el comportamiento
-esperado):
+### Comparar varios archivos
 
 ```bash
-python entropia_archivo.py
-# Uso: python entropia_archivo.py archivo1 [archivo2 ...]
+python main.py ejemplo_texto.txt texto.zip
 ```
+
+También pueden analizarse formatos diferentes:
+
+```bash
+python main.py audio.wav audio.mp3 imagen.bmp imagen.jpg
+```
+
+### Cambiar la cantidad de bytes mostrados
+
+Por defecto se muestran los 20 bytes más frecuentes:
+
+```bash
+python main.py ejemplo_texto.txt texto.zip --top 30
+```
+
+También puede utilizarse la forma abreviada:
+
+```bash
+python main.py ejemplo_texto.txt -t 10
+```
+
+### Mostrar la ayuda
+
+```bash
+python main.py --help
+```
+    usage: main.py [-h] [-t TOP] archivos [archivos ...]
+
+    Calcula la distribución, entropía y redundancia de uno o más archivos.
+
+    positional arguments:
+      archivos       Archivos que se analizarán.
+
+    options:
+      -h, --help     show this help message and exit
+      -t, --top TOP  Cantidad de símbolos que se mostrarán.
+
+Si el programa se ejecuta sin archivos, `argparse` muestra el modo de uso e informa que falta el argumento obligatorio `archivos`.
 
 ## Ejemplo de salida
 
-```
-Archivo: texto.txt
-  Tamaño (bytes, N):       43400
-  Símbolos distintos:      38 / 256
-  Entropía H:              4.1752 bits/símbolo
-  Entropía máxima:         8.0000 bits/símbolo
-  Rendimiento (eta=H/Hmax):52.19 %
-  Redundancia (R=1-eta):   47.81 %
+```text
+Archivo: ejemplo_texto.txt
+  Tamaño (bytes, N):         43400
+  Símbolos distintos:        38 / 256
+  Entropía H:                4.1752 bits/símbolo
+  Entropía máxima:           8.0000 bits/símbolo
+  Rendimiento (η = H/Hmax):  52.19 %
+  Redundancia (R = 1 - η):   47.81 %
 
     Byte   Símbolo   Frecuencia        p_i
   ------------------------------------------
-      32                   7120     0.1641
-      97         a         4280     0.0986
-     101         e         4240     0.0977
-     ...
+      32                 7120      0.1641
+      97         a       4280      0.0986
+     101         e       4240      0.0977
   ... y 18 símbolos más (no mostrados)
 
 Archivo: texto.zip
-  Tamaño (bytes, N):       980
-  Símbolos distintos:      231 / 256
-  Entropía H:              6.6635 bits/símbolo
-  Entropía máxima:         8.0000 bits/símbolo
-  Rendimiento (eta=H/Hmax):83.29 %
-  Redundancia (R=1-eta):   16.71 %
-  ...
+  Tamaño (bytes, N):         980
+  Símbolos distintos:        231 / 256
+  Entropía H:                6.6635 bits/símbolo
+  Entropía máxima:           8.0000 bits/símbolo
+  Rendimiento (η = H/Hmax):  83.29 %
+  Redundancia (R = 1 - η):   16.71 %
 
-=======================================================
+    Byte   Símbolo   Frecuencia        p_i
+  ------------------------------------------
+       0      \x00          128      0.1306
+      15      \x0f           84      0.0857
+     240      \xf0           83      0.0847
+  ... y 211 símbolos más (no mostrados)
+
+=================================================================
 Comparación
-=======================================================
-  texto.txt                      H=4.1752 bits/símbolo   R=47.81%
-  texto.zip                      H=6.6635 bits/símbolo   R=16.71%
-
-Interpretación: cuanto más comprimido está un archivo, más cerca está
-su entropía empírica del máximo teórico (8 bits/símbolo) y más chica es
-su redundancia...
+=================================================================
+ejemplo_texto.txt         N=     43400 H=4.1752 R=47.81%
+texto.zip                 N=       980 H=6.6635 R=16.71%
 ```
+
+Los valores son ilustrativos y dependen del contenido real de los archivos.
 
 ## Explicación teórica
 
-Un archivo de texto plano tiene patrones fuertes (letras frecuentes,
-palabras repetidas, espacios), así que su distribución de bytes está lejos
-de ser uniforme y su entropía queda muy por debajo de 8 bits/símbolo.
+Un archivo de texto suele contener patrones estadísticos fuertes: espacios frecuentes, letras repetidas y secuencias recurrentes. Por eso, su distribución de bytes normalmente está lejos de ser uniforme y su entropía empírica suele ser menor que 8 bits por símbolo.
 
-Un algoritmo de compresión (por ejemplo, DEFLATE en el caso del `.zip`,
-que combina LZ77 + Huffman) detecta y elimina esos patrones repetitivos:
-primero reemplaza secuencias repetidas por referencias (LZ77), y luego
-asigna códigos cortos a lo que sigue siendo frecuente (Huffman). El
-resultado es un flujo de bytes sin estructura explotable, donde todos los
-valores tienden a aparecer con probabilidad similar — por eso su entropía
-empírica se acerca al máximo teórico de 8 bits/símbolo. Esa cercanía al
-máximo es la métrica de que ya no queda redundancia para seguir
-comprimiendo con ese método.
+Un algoritmo de compresión busca reducir esas regularidades. Por ejemplo, DEFLATE combina LZ77, que representa secuencias repetidas mediante referencias, con codificación Huffman, que asigna códigos más cortos a símbolos frecuentes.
+
+Como resultado, los bytes de un archivo comprimido suelen presentar una distribución más uniforme y una entropía empírica de primer orden más cercana a 8 bits por símbolo.
+
+Sin embargo, una entropía alta no demuestra por sí sola que un archivo esté comprimido. Los datos cifrados o generados aleatoriamente también pueden presentar una distribución cercana a la uniforme. Además, esta medición analiza bytes individuales y no detecta dependencias entre secuencias de bytes.
 
 ## Complejidad
 
-El algoritmo es **O(N)**: cada byte del archivo se lee y se cuenta una
-única vez, usando un diccionario de conteo (`Counter`) indexado por valor
-de byte (0 a 255, un alfabeto de tamaño fijo). Como el alfabeto es
-constante, el trabajo por cada byte es O(1), y el cálculo final de H
-(sobre a lo sumo 256 frecuencias) también es O(1) — de ahí que el costo
-total crezca linealmente con el tamaño del archivo y no más rápido.
+Sea `N` el tamaño del archivo:
+
+- **Tiempo: O(N).** Cada byte se recorre una vez para actualizar su frecuencia.
+- **Memoria: O(N).** La implementación actual utiliza `f.read()`, por lo que carga el archivo completo en memoria.
+- **Cálculo final: O(256).** La distribución y la entropía recorren un alfabeto fijo de 256 valores, lo que se considera constante respecto de `N`.
+
+Para archivos muy grandes sería conveniente procesar bloques, por ejemplo de 64 KB, y acumular las frecuencias sin mantener todo el contenido en memoria. Esa variante conservaría el tiempo O(N) y reduciría la memoria adicional a O(1), porque el alfabeto tiene un tamaño fijo.
 
 ## Estructura del código
 
-| Función | Responsabilidad |
-|---|---|
-| `calcular_entropia` | Lee el archivo en bloques de 64 KB, cuenta ocurrencias de cada byte (O(N)) y aplica la fórmula de Shannon sobre las frecuencias observadas |
-| `imprimir_tabla_frecuencias` | Muestra la frecuencia relativa (p_i) de los bytes más comunes, ordenados de mayor a menor |
-| `reportar` | Orquesta el análisis completo de un archivo (llama a las dos funciones anteriores) e imprime el resumen |
-| `main` | Punto de entrada: lee los argumentos de línea de comandos, recorre los archivos pedidos y muestra la comparación final |
+| Función | Ubicación | Responsabilidad |
+|---|---|---|
+| `calcular_distribucion_bytes` | `utils.py` | Lee el archivo, cuenta los bytes y devuelve sus probabilidades. |
+| `calcular_entropia_shannon` | `utils.py` | Calcula la entropía a partir de la distribución recibida. |
+| `validar_archivo` | Programa principal | Comprueba que el archivo exista y no esté vacío. |
+| `obtener_frecuencias` | Programa principal | Obtiene las frecuencias absolutas necesarias para la tabla. |
+| `imprimir_tabla_frecuencias` | Programa principal | Imprime los bytes más comunes y sus probabilidades. |
+| `reportar` | Programa principal | Coordina el análisis y presenta los resultados de un archivo. |
+| `parsear_argumentos` | Programa principal | Procesa los archivos y la opción `--top` mediante `argparse`. |
+| `imprimir_comparacion` | Programa principal | Muestra la comparación cuando se analizaron varios archivos. |
+| `main` | Programa principal | Controla la ejecución general y el manejo de errores. |
 
 ## Notas
 
-- Los bytes no imprimibles (fuera del rango ASCII 32-126) se muestran en
-  la tabla como `\xHH` (su valor hexadecimal) en vez de un carácter, algo
-  común al analizar archivos comprimidos o binarios.
-- Por defecto la tabla de frecuencias muestra los 20 bytes más comunes de
-  cada archivo (parámetro `top` de `reportar`/`imprimir_tabla_frecuencias`)
-  para no saturar la salida cuando el archivo usa los 256 valores posibles.
-
-## Autor / Materia
-
-Teoría de la Información — Licenciatura en Ciencias de la Computación — 2026
+- Los bytes imprimibles del rango ASCII `32-126` se muestran como caracteres.
+- Los bytes no imprimibles se representan como `\xHH`, donde `HH` es su valor hexadecimal.
+- De forma predeterminada se muestran los 20 bytes más frecuentes.
+- Los archivos vacíos se rechazan para evitar una división por cero al calcular la distribución.
+- Importar explícitamente las funciones de `utils.py` facilita conocer las dependencias del programa y evita colisiones de nombres.

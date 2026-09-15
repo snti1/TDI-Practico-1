@@ -44,29 +44,29 @@ def parsear_argumentos():
   return parser.parse_args()
 
 def mostrar_resultados(resultados):
-    print(f"{'Archivo':<20}{'Entropía':>15}{'IC':>15}")
-    print("-" * 50)
-    for archivo, valores in resultados.items():
-        print(f"{archivo:<20}{valores['entropia']:>15.4f}{valores['ic']:>15.6f}")
+    print(f"{'Archivo':<40}{'Entropía':>15}{'IC':>15}")
+    print("-" * 70)
+    for r in resultados:
+        nombre = os.path.basename(r["path"])
+        print(f"{nombre:<40}{r['entropia']:>15.4f}{r['ic']:>15.6f}")
 
 def main():
   try:
     args = parsear_argumentos()
-    print("## Cálculo de IC de archivos ##\n")
+    print("## Cálculo de Entropía e IC de archivos ##\n")
 
-    resultados = {}
+    resultados = []
     for path in args.archivos:
       validar_archivo(path)
       ic = calcular_ic(path)
       dist = calcular_distribucion_bytes(path)
       entropia = calcular_entropia_shannon(dist)
-      _, ext = os.path.splitext(path)
-      resultados[ext] = {}          
-      resultados[ext.lower()]["ic"] = ic
-      resultados[ext.lower()]["entropia"] = entropia
+
+      resultados.append({"path": path, "ic": ic, "entropia": entropia})
 
     mostrar_resultados(resultados)
   except Exception as e: 
     print(e)
+
 if __name__ == "__main__":
   main()

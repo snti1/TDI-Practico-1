@@ -1,84 +1,200 @@
-import sys
-import math
+import os
+import argparse
 from collections import Counter
 
-BITS_MAXIMOS = 8  # log2(256), máximo teórico de un byte
+os.sys.path.append(
+    os.path.dirname(
+        os.path.dirname(os.path.abspath(__file__))
+    )
+)
+
+from utils import (
+    calcular_entropia_shannon,
+    calcular_distribucion_bytes,
+)
 
 
-def calcular_entropia(path: str):
-    contador = Counter()
-    n = 0
-    with open(path, "rb") as f:  # abre el archivo en modo binario
-        # lee en bloques de 64 KB en vez de todo de una vez, para no
-        # cargar archivos enormes en memoria; cada byte se toca una
-        # sola vez esto es lo que garantiza el O(N)
-        for bloque in iter(lambda: f.read(65536), b""):
-            contador.update(bloque)  # cuenta cuántas veces aparece cada byte (0..255)
-            n += len(bloque)
-    if n == 0:
-        return 0.0, 0.0, 0, contador
-    entropia = 0.0
-    for frecuencia in contador.values():
-        p_i = frecuencia / n  # frecuencia relativa (probabilidad empírica) del byte
-        entropia -= p_i * math.log2(p_i)
+BITS_MAXIMOS = 8
+
+
+def validar_archivo(path):
+    if not os.path.isfile(path):
+        raise FileNotFoundError(
+            f"No se encontró el archivo: {path}"
+        )
+
+    if os.path.getsize(path) == 0:
+        raise ValueError(
+            f"El archivo está vacío: {path}"
+        )
+
+
+def obtener_frecuencias(distribucion, total_bytes):
+    """
+    Reconstruye las frecuencias absolutas a partir de la
+    distribución calculada en utils.py.
+    """
+    return Counter({
+        byte: round(probabilidad * total_bytes)
+        for byte, probabilidad in enumerate(distribucion)
+        if probabilidad > 0
+    })
+
+
+def imprimir_tabla_frecuencias(
+    contador,
+    total_bytes,
+    top=20,
+):
+    print(
+        f"\n  {'Byte':>6} "
+        f"{'Símbolo':>9} "
+        f"{'Frecuencia':>12} "
+        f"{'p_i':>10}"
+    )
+
+    print("  " + "-" * 42)
+
+    for byte, frecuencia in contador.most_common(top):
+        probabilidad = frecuencia / total_bytes
+
+        simbolo = (
+            chr(byte)
+            if 32 <= byte <= 126
+            else f"\\x{byte:02x}"
+        )
+
+        print(
+            f"  {byte:>6} "
+            f"{simbolo:>9} "
+            f"{frecuencia:>12} "
+            f"{probabilidad:>10.4f}"
+        )
+
+    restantes = len(contador) - min(top, len(contador))
+
+    if restantes > 0:
+        print(
+            f"  ... y {restantes} símbolos más "
+            "(no mostrados)"
+        )
+
+
+def reportar(path, top=20):
+    validar_archivo(path)
+
+    # Funciones reutilizadas directamente desde utils.py
+    distribucion = calcular_distribucion_bytes(path)
+    entropia = calcular_entropia_shannon(distribucion)
+
+    total_bytes = os.path.getsize(path)
+
+    frecuencias = obtener_frecuencias(
+        distribucion,
+        total_bytes,
+    )
+
     rendimiento = entropia / BITS_MAXIMOS
     redundancia = 1 - rendimiento
-    return entropia, redundancia, n, contador
 
-def imprimir_tabla_frecuencias(contador: Counter, n: int, top: int = 20):
-    print(f"\n  {'Byte':>6} {'Símbolo':>9} {'Frecuencia':>12} {'p_i':>10}")
-    print("  " + "-" * 42)
-    mas_frecuentes = contador.most_common(top)
-    for byte, frecuencia in mas_frecuentes:
-        p_i = frecuencia / n
-        # si el byte corresponde a un caracter ASCII imprimible, lo mostramos
-        # como caracter; si no (bytes de control, binarios), mostramos su
-        # valor hexadecimal
-        simbolo = chr(byte) if 32 <= byte <= 126 else f"\\x{byte:02x}"
-        print(f"  {byte:>6} {simbolo:>9} {frecuencia:>12} {p_i:>10.4f}")
-    restantes = len(contador) - len(mas_frecuentes)
-    if restantes > 0:
-        print(f"  ... y {restantes} símbolos más (no mostrados)")
-
-def reportar(path: str, top: int = 20):
-    H, R, N, frecuencias = calcular_entropia(path)
-    eta = (H / BITS_MAXIMOS) if BITS_MAXIMOS else 0.0
     print(f"\nArchivo: {path}")
-    print(f"  Tamaño (bytes, N):       {N}")
-    print(f"  Símbolos distintos:      {len(frecuencias)} / 256")
-    print(f"  Entropía H:              {H:.4f} bits/símbolo")
-    print(f"  Entropía máxima:         {BITS_MAXIMOS:.4f} bits/símbolo")
-    print(f"  Rendimiento (eta=H/Hmax):{eta*100:.2f} %")
-    print(f"  Redundancia (R=1-eta):   {R*100:.2f} %")
-    imprimir_tabla_frecuencias(frecuencias, N, top=top)
-    return H, R, N
+    print(f"  Tamaño (bytes, N):         {total_bytes}")
+    print(
+        f"  Símbolos distintos:        "
+        f"{len(frecuencias)} / 256"
+    )
+    print(
+        f"  Entropía H:                "
+        f"{entropia:.4f} bits/símbolo"
+    )
+    print(
+        f"  Entropía máxima:           "
+        f"{BITS_MAXIMOS:.4f} bits/símbolo"
+    )
+    print(
+        f"  Rendimiento (η = H/Hmax):  "
+        f"{rendimiento * 100:.2f} %"
+    )
+    print(
+        f"  Redundancia (R = 1 - η):   "
+        f"{redundancia * 100:.2f} %"
+    )
+
+    imprimir_tabla_frecuencias(
+        frecuencias,
+        total_bytes,
+        top,
+    )
+
+    return entropia, redundancia, total_bytes
+
+
+def parsear_argumentos():
+    parser = argparse.ArgumentParser(
+        description=(
+            "Calcula la distribución, entropía y redundancia "
+            "de uno o más archivos."
+        )
+    )
+
+    parser.add_argument(
+        "archivos",
+        nargs="+",
+        help="Archivos que se analizarán.",
+    )
+
+    parser.add_argument(
+        "-t",
+        "--top",
+        type=int,
+        default=20,
+        help="Cantidad de símbolos que se mostrarán.",
+    )
+
+    return parser.parse_args()
+
 
 def main():
-    if len(sys.argv) < 2:
-        print("Uso: python entropia_archivo.py archivo1 [archivo2 ...]")
-        sys.exit(1)
+    args = parsear_argumentos()
     resultados = []
-    for path in sys.argv[1:]:
-        try:
-            H, R, N = reportar(path)
-            resultados.append((path, H, R, N))
-        except FileNotFoundError:
-            print(f"\nArchivo no encontrado: {path}")
-    if len(resultados) >= 2:
-        print("\n" + "=" * 55)
-        print("Comparación")
-        print("=" * 55)
-        for path, H, R, N in resultados:
-            print(f"  {path:30s} H={H:6.4f} bits/símbolo   R={R*100:5.2f}%")
-        print(
-            "\nInterpretación: cuanto más comprimido está un archivo, más "
-            "cerca está su entropía empírica del máximo teórico (8 "
-            "bits/símbolo) y más chica es su redundancia. Esto es "
-            "esperable: un buen compresor elimina los patrones repetidos "
-            "(la redundancia estadística) del archivo original, así que "
-            "en la salida comprimida cada byte tiende a la equiprobabilidad "
-            "y aporta la máxima información posible por símbolo."
+
+    if args.top <= 0:
+        raise ValueError(
+            "--top debe ser mayor que cero"
         )
+
+    for path in args.archivos:
+        try:
+            entropia, redundancia, total = reportar(
+                path,
+                args.top,
+            )
+
+            resultados.append(
+                (path, entropia, redundancia, total)
+            )
+
+        except (FileNotFoundError, ValueError) as error:
+            print(f"\nError: {error}")
+
+        except OSError as error:
+            print(
+                f"\nNo se pudo procesar '{path}': {error}"
+            )
+
+    if len(resultados) >= 2:
+        print("\n" + "=" * 65)
+        print("Comparación")
+        print("=" * 65)
+
+        for path, entropia, redundancia, total in resultados:
+            print(
+                f"{os.path.basename(path):25s} "
+                f"N={total:10d} "
+                f"H={entropia:6.4f} "
+                f"R={redundancia * 100:6.2f}%"
+            )
+
 
 if __name__ == "__main__":
     main()
