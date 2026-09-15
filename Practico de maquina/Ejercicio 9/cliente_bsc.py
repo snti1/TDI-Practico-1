@@ -35,8 +35,8 @@ def enviar_mensaje(sock, mensaje):
     encabezado = struct.pack("!I", len(datos))
     sock.sendall(encabezado + datos)
 
-# ========================================================== # FUNCIONES AUXILIARES Y MATEMÁTICAS (TEORÍA DE LA INFORMACIÓN)
-# ========================================================== #
+# ============================= # FUNCIONES AUXILIARES Y MATEMÁTICAS 
+# ============================= #
 def texto_a_binario(texto):
     """
     Convierte una cadena de texto en su representación binaria de 8 bits por carácter.
