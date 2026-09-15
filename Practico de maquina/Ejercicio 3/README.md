@@ -7,56 +7,19 @@
 Este programa analiza uno o más archivos como secuencias de bytes y calcula para cada uno:
 
 - La frecuencia relativa de aparición de cada byte posible (`0` a `255`), representada por `p_i`.
-- La entropía empírica de Shannon:
+- La entropía empírica de Shannon: $H = -Σ p_i · log2(p_i)$
 
-  ```text
-  H = -Σ p_i · log2(p_i)
-  ```
+- El rendimiento: $η = H / H_max$
 
-- El rendimiento:
-
-  ```text
-  η = H / H_max
-  ```
-
-- La redundancia:
-
-  ```text
-  R = 1 - η
-  ```
+- La redundancia: $R = 1 - η$
 
 Para un byte existen 256 símbolos posibles, por lo que la entropía máxima teórica es:
 
-```text
-H_max = log2(256) = 8 bits/símbolo
-```
+$H_max = log2(256) = 8 bits/símbolo$
 
 El programa permite analizar varios archivos en una misma ejecución. Para cada archivo muestra un resumen y una tabla con los bytes más frecuentes. Cuando se procesan dos o más archivos, también imprime una comparación final.
 
-## Estructura de archivos
-
-El programa reutiliza las funciones genéricas definidas en `utils.py`:
-
-```text
-proyecto/
-├── utils.py
-└── ejercicios/
-    └── entropia_archivo.py
-```
-
-La ruta puede variar, pero `utils.py` debe ser importable desde el programa principal.
-
-## Funciones reutilizadas
-
-El módulo `utils.py` contiene las siguientes funciones genéricas:
-
-| Función | Responsabilidad |
-|---|---|
-| `calcular_distribucion_bytes(path)` | Lee el archivo en modo binario, cuenta la aparición de cada byte y devuelve un arreglo de 256 probabilidades. |
-| `calcular_entropia_shannon(distribucion)` | Recibe una distribución de probabilidades y calcula la entropía de Shannon. |
-
-El programa principal no vuelve a definir estas funciones; solamente las importa:
-
+El programa principal importa:
 ```python
 from utils import (
     calcular_distribucion_bytes,
@@ -112,6 +75,16 @@ python entropia_archivo.py ejemplo_texto.txt -t 10
 ```bash
 python entropia_archivo.py --help
 ```
+    usage: main.py [-h] [-t TOP] archivos [archivos ...]
+
+    Calcula la distribución, entropía y redundancia de uno o más archivos.
+
+    positional arguments:
+      archivos       Archivos que se analizarán.
+
+    options:
+      -h, --help     show this help message and exit
+      -t, --top TOP  Cantidad de símbolos que se mostrarán.
 
 Si el programa se ejecuta sin archivos, `argparse` muestra el modo de uso e informa que falta el argumento obligatorio `archivos`.
 
