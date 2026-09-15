@@ -241,22 +241,6 @@ Esta reducción se vuelve relevante al aumentar la cantidad de registros. Ahorra
 
 La representación binaria también puede reducir el volumen transferido y la cantidad de operaciones de entrada y salida. Como contrapartida, pierde legibilidad directa y requiere conocer exactamente el formato para interpretar los datos.
 
-## Complejidad
-
-Sea `N` la cantidad de personas y considerando que cada una tiene ocho booleanos:
-
-- **Generación de datos: O(N × 8) = O(N).**
-- **Escritura JSON: O(N).**
-- **Escritura binaria: O(N × 8) = O(N).**
-- **Lectura JSON: O(N).**
-- **Lectura y desempaquetado binario: O(N × 8) = O(N).**
-
-Como la cantidad de booleanos es constante, el costo total crece linealmente con la cantidad de personas.
-
-El almacenamiento binario requerido también es lineal:
-
-$Espacio_{binario} = 65N\ bytes$
-
 ## Estructura del código
 
 | Función | Responsabilidad |
